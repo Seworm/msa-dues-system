@@ -1,0 +1,2533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UHAS MSA Dues Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --uhas-green: #006837;
+            --uhas-gold: #FFD700;
+            --uhas-light-green: #E8F5E9;
+            --uhas-dark-green: #004d26;
+        }
+        
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+        }
+        
+        .sidebar {
+            background-color: var(--uhas-dark-green);
+            color: white;
+            min-height: calc(100vh - 56px);
+            padding-top: 20px;
+        }
+        
+        .sidebar a {
+            color: white;
+            padding: 10px 15px;
+            display: block;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar a:hover, .sidebar a.active {
+            background-color: var(--uhas-green);
+            border-left: 4px solid var(--uhas-gold);
+        }
+        
+        .stat-card {
+            border-radius: 10px;
+            border: none;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .status-paid {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-partial {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .status-unpaid {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .table th {
+            background-color: var(--uhas-green);
+            color: white;
+            border: none;
+        }
+        
+        .btn-uhas {
+            background-color: var(--uhas-green);
+            color: white;
+            border: none;
+        }
+        
+        .btn-uhas:hover {
+            background-color: var(--uhas-dark-green);
+            color: white;
+        }
+        
+        .btn-danger-uhas {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+        
+        .btn-danger-uhas:hover {
+            background-color: #c82333;
+            color: white;
+        }
+        
+        .sync-indicator {
+            position: fixed;
+            top: 70px;
+            right: 20px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .online-badge {
+            background-color: #28a745;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        
+        .offline-badge {
+            background-color: #dc3545;
+            color: white;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+        }
+        
+        .user-badge {
+            background-color: var(--uhas-gold);
+            color: var(--uhas-dark-green);
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .recent-activity-item {
+            border-left: 3px solid var(--uhas-green);
+            padding-left: 10px;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .cursor-pointer {
+            cursor: pointer;
+        }
+        
+        .modal-lg-custom {
+            max-width: 800px;
+        }
+        
+        .payment-input {
+            max-width: 150px;
+        }
+        
+        @media (max-width: 768px) {
+            .sync-indicator {
+                top: 60px;
+                right: 10px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        .print-only {
+            display: none;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-only {
+                display: block !important;
+            }
+            
+            body {
+                font-size: 12px;
+            }
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+        
+        .toast {
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* Loading spinner */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 9999;
+            display: none;
+        }
+        
+        .spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        /* Student ID highlighting */
+        .student-id-highlight {
+            font-family: 'Courier New', monospace;
+            background-color: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sync Status Indicator -->
+    <div id="syncIndicator" class="sync-indicator alert alert-info shadow-sm">
+        <i class="fas fa-sync fa-spin me-2"></i>
+        <span id="syncMessage">Syncing...</span>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="spinner-border text-light spinner" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--uhas-green);">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-university me-2"></i>
+                UHAS Medical Students' Association
+            </a>
+            <div class="d-flex align-items-center">
+                <span id="onlineStatus" class="offline-badge me-2">
+                    <i class="fas fa-wifi-slash me-1"></i> Offline
+                </span>
+                <span id="currentUser" class="user-badge me-2">Not Set</span>
+                <span class="navbar-text text-white d-none d-md-block">
+                    Dues Management – 2025/2026
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 d-md-block sidebar no-print">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-user-circle fa-3x text-light"></i>
+                        </div>
+                        <h6 id="executiveName">Executive: Not Set</h6>
+                        <button class="btn btn-sm btn-outline-light mt-2" data-bs-toggle="modal" data-bs-target="#executiveModal">
+                            <i class="fas fa-edit me-1"></i> Set User
+                        </button>
+                    </div>
+                    
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#" id="dashboardTab">
+                                <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="studentsTab">
+                                <i class="fas fa-users me-2"></i> Students
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="paymentTab">
+                                <i class="fas fa-money-bill-wave me-2"></i> Record Payment
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="paymentHistoryTab">
+                                <i class="fas fa-history me-2"></i> Payment History
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="reportsTab">
+                                <i class="fas fa-chart-bar me-2"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="syncTab">
+                                <i class="fas fa-sync me-2"></i> Sync Status
+                            </a>
+                        </li>
+                    </ul>
+                    
+                    <div class="mt-4 p-3 bg-dark text-light rounded">
+                        <h6 class="mb-2"><i class="fas fa-info-circle me-1"></i> Real-time Sync</h6>
+                        <small class="d-block mb-1">• All changes sync across devices</small>
+                        <small class="d-block mb-1">• Google Sheets is central database</small>
+                        <small class="d-block">• Auto-sync every 30 seconds</small>
+                    </div>
+                    
+                    <div class="mt-3 p-3 bg-dark text-light rounded">
+                        <h6 class="mb-2"><i class="fas fa-users me-1"></i> Active Users</h6>
+                        <div id="activeUsersList" class="small">
+                            <!-- Active users will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+                <!-- Dashboard Section -->
+                <div id="dashboardSection" class="content-section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-tachometer-alt me-2"></i> Dashboard</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="btn-group me-2">
+                                <button class="btn btn-sm btn-outline-primary" onclick="forceSync()">
+                                    <i class="fas fa-sync me-1"></i> Sync Now
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="exportToCSV()">
+                                    <i class="fas fa-download me-1"></i> Export
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="loadAllData()">
+                                    <i class="fas fa-redo me-1"></i> Refresh
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Real-time Activity -->
+                    <div class="row mb-4">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0"><i class="fas fa-bolt me-2"></i> Recent Activity</h5>
+                                    <span class="badge bg-primary" id="activityCount">0 activities</span>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentActivity">
+                                        <div class="text-center text-muted py-3">
+                                            <i class="fas fa-spinner fa-spin me-2"></i> Loading activities...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Stats Cards -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card h-100 border-start border-primary border-5">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                                Total Students</div>
+                                            <div class="h5 mb-0 fw-bold text-gray-800" id="totalStudents">0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-users fa-2x text-primary"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card h-100 border-start border-success border-5">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                                Expected Revenue</div>
+                                            <div class="h5 mb-0 fw-bold text-gray-800" id="expectedRevenue">GHS 0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-money-bill-wave fa-2x text-success"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card h-100 border-start border-info border-5">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs fw-bold text-info text-uppercase mb-1">
+                                                Total Collected</div>
+                                            <div class="h5 mb-0 fw-bold text-gray-800" id="totalCollected">GHS 0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-hand-holding-usd fa-2x text-info"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card stat-card h-100 border-start border-danger border-5">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">
+                                                Total Outstanding</div>
+                                            <div class="h5 mb-0 fw-bold text-gray-800" id="totalOutstanding">GHS 0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-exclamation-triangle fa-2x text-danger"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card mb-4">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0">Quick Actions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <button class="btn btn-uhas w-100" onclick="showPaymentModal()">
+                                                <i class="fas fa-plus-circle me-2"></i> Record Payment
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <button class="btn btn-outline-primary w-100" onclick="filterByStatus('Unpaid')">
+                                                <i class="fas fa-exclamation-circle me-2"></i> View Unpaid
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <button class="btn btn-outline-success w-100" onclick="filterByLevel('100')">
+                                                <i class="fas fa-graduation-cap me-2"></i> View Level 100
+                                            </button>
+                                        </div>
+                                        <div class="col-md-3 mb-3">
+                                            <button class="btn btn-outline-info w-100" onclick="generateReport()">
+                                                <i class="fas fa-print me-2"></i> Print Report
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Payments Table -->
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">Recent Payments</h5>
+                                    <small class="text-muted">Auto-updates every 30s</small>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover" id="recentPaymentsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Time</th>
+                                                    <th>Student ID</th>
+                                                    <th>Name</th>
+                                                    <th>Level</th>
+                                                    <th>Amount</th>
+                                                    <th>Method</th>
+                                                    <th>Recorded By</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="recentPaymentsBody">
+                                                <tr>
+                                                    <td colspan="8" class="text-center text-muted">
+                                                        <i class="fas fa-spinner fa-spin me-2"></i> Loading payments...
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Students Section -->
+                <div id="studentsSection" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-users me-2"></i> Student Records</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="input-group me-2">
+                                <input type="text" class="form-control" placeholder="Search by name or ID" id="searchInput">
+                                <button class="btn btn-outline-secondary" type="button" onclick="searchStudents()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filters -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-2">
+                            <select class="form-select" id="levelFilter" onchange="filterStudents()">
+                                <option value="">All Levels</option>
+                                <option value="100">Level 100</option>
+                                <option value="200">Level 200</option>
+                                <option value="300">Level 300</option>
+                                <option value="400">Level 400</option>
+                                <option value="500">Level 500</option>
+                                <option value="600">Level 600</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <select class="form-select" id="statusFilter" onchange="filterStudents()">
+                                <option value="">All Statuses</option>
+                                <option value="Paid">Paid</option>
+                                <option value="Partially Paid">Partially Paid</option>
+                                <option value="Unpaid">Unpaid</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+                                <i class="fas fa-redo me-1"></i> Reset Filters
+                            </button>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-uhas w-100" onclick="showPaymentModal()">
+                                <i class="fas fa-plus-circle me-1"></i> New Payment
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Students Table -->
+                    <div class="card">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Student List</h5>
+                            <span class="badge bg-primary" id="studentCount">0 students</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="studentsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Full Name</th>
+                                            <th>Level</th>
+                                            <th>Amount Due</th>
+                                            <th>Amount Paid</th>
+                                            <th>Balance</th>
+                                            <th>Status</th>
+                                            <th>Last Payment</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentsTableBody">
+                                        <tr>
+                                            <td colspan="9" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin me-2"></i> Loading students...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Record Payment Section -->
+                <div id="paymentSection" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-money-bill-wave me-2"></i> Record Payment</h1>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="card mb-4">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0">Payment Details</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="paymentForm">
+                                        <div class="mb-3">
+                                            <label for="studentSelect" class="form-label">Select Student</label>
+                                            <select class="form-select" id="studentSelect" required>
+                                                <option value="">Choose a student...</option>
+                                                <!-- Options will be populated by JavaScript -->
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Student ID</label>
+                                                <input type="text" class="form-control" id="paymentStudentId" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Level</label>
+                                                <input type="text" class="form-control" id="paymentLevel" readonly>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row mb-3">
+                                            <div class="col-md-6">
+                                                <label class="form-label">Amount Due</label>
+                                                <input type="text" class="form-control" id="paymentAmountDue" readonly>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label">Already Paid</label>
+                                                <input type="text" class="form-control" id="paymentAlreadyPaid" readonly>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="paymentAmount" class="form-label">Payment Amount (GHS)</label>
+                                            <input type="number" class="form-control payment-input" id="paymentAmount" 
+                                                   min="0" step="0.01" required 
+                                                   placeholder="Enter payment amount">
+                                            <div class="form-text" id="balanceAfterPayment">Balance after payment: GHS 0</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="paymentMethod" class="form-label">Payment Method</label>
+                                            <select class="form-select" id="paymentMethod" required>
+                                                <option value="">Select method...</option>
+                                                <option value="Cash">Cash</option>
+                                                <option value="MoMo">Mobile Money (MoMo)</option>
+                                                <option value="Transfer">Bank Transfer</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="alert alert-warning" id="overpaymentAlert" style="display: none;">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <span id="overpaymentMessage"></span>
+                                        </div>
+                                        
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-uhas btn-lg">
+                                                <i class="fas fa-save me-2"></i> Record Payment
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-6">
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0">Payment Preview</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="text-center mb-4">
+                                        <i class="fas fa-receipt fa-4x text-muted mb-3"></i>
+                                        <h5>Payment Receipt Preview</h5>
+                                    </div>
+                                    
+                                    <div class="border p-3 rounded mb-3">
+                                        <div class="row mb-2">
+                                            <div class="col-6"><strong>Student:</strong></div>
+                                            <div class="col-6 text-end" id="previewName">-</div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-6"><strong>Student ID:</strong></div>
+                                            <div class="col-6 text-end" id="previewId">-</div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-6"><strong>Level:</strong></div>
+                                            <div class="col-6 text-end" id="previewLevel">-</div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-6"><strong>Amount Due:</strong></div>
+                                            <div class="col-6 text-end" id="previewDue">GHS 0</div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-6"><strong>Payment Amount:</strong></div>
+                                            <div class="col-6 text-end" id="previewAmount">GHS 0</div>
+                                        </div>
+                                        <div class="row mb-2">
+                                            <div class="col-6"><strong>Payment Method:</strong></div>
+                                            <div class="col-6 text-end" id="previewMethod">-</div>
+                                        </div>
+                                        <hr>
+                                        <div class="row mb-2">
+                                            <div class="col-6"><strong>New Balance:</strong></div>
+                                            <div class="col-6 text-end fw-bold" id="previewBalance">GHS 0</div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-6"><strong>New Status:</strong></div>
+                                            <div class="col-6 text-end">
+                                                <span class="status-badge status-unpaid" id="previewStatus">Unpaid</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <small>Payment will be recorded by: <span id="previewExecutive" class="fw-bold">Not set</span>. Date: <span id="previewDate">-</span></small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment History Section -->
+                <div id="paymentHistorySection" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-history me-2"></i> Payment History</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <div class="input-group me-2">
+                                <input type="text" class="form-control" placeholder="Search by name, ID, or executive" id="historySearchInput">
+                                <button class="btn btn-outline-secondary" type="button" onclick="searchPaymentHistory()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment History Filters -->
+                    <div class="row mb-4">
+                        <div class="col-md-3 mb-2">
+                            <select class="form-select" id="historyLevelFilter" onchange="filterPaymentHistory()">
+                                <option value="">All Levels</option>
+                                <option value="100">Level 100</option>
+                                <option value="200">Level 200</option>
+                                <option value="300">Level 300</option>
+                                <option value="400">Level 400</option>
+                                <option value="500">Level 500</option>
+                                <option value="600">Level 600</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <select class="form-select" id="historyMethodFilter" onchange="filterPaymentHistory()">
+                                <option value="">All Methods</option>
+                                <option value="Cash">Cash</option>
+                                <option value="MoMo">Mobile Money</option>
+                                <option value="Transfer">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <input type="date" class="form-control" id="historyDateFilter" onchange="filterPaymentHistory()" placeholder="Filter by date">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <button class="btn btn-outline-secondary w-100" onclick="resetHistoryFilters()">
+                                <i class="fas fa-redo me-1"></i> Reset Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment History Table -->
+                    <div class="card">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Payment Transactions</h5>
+                            <span class="badge bg-primary" id="totalPaymentsCount">0 payments</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="paymentHistoryTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Student ID</th>
+                                            <th>Name</th>
+                                            <th>Level</th>
+                                            <th>Amount</th>
+                                            <th>Method</th>
+                                            <th>Recorded By</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentHistoryBody">
+                                        <tr>
+                                            <td colspan="8" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin me-2"></i> Loading payment history...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reports Section -->
+                <div id="reportsSection" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-chart-bar me-2"></i> Reports & Printing</h1>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="card mb-4">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0">Generate Report</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Report Type</label>
+                                        <select class="form-select" id="reportType">
+                                            <option value="all">All Students</option>
+                                            <option value="unpaid">Students Who Owe</option>
+                                            <option value="paid">Students Fully Paid</option>
+                                            <option value="level">By Level</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3" id="levelSelectContainer" style="display: none;">
+                                        <label class="form-label">Select Level</label>
+                                        <select class="form-select" id="reportLevel">
+                                            <option value="100">Level 100</option>
+                                            <option value="200">Level 200</option>
+                                            <option value="300">Level 300</option>
+                                            <option value="400">Level 400</option>
+                                            <option value="500">Level 500</option>
+                                            <option value="600">Level 600</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-uhas" onclick="generateReport()">
+                                            <i class="fas fa-file-alt me-2"></i> Generate Report
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="printReport()">
+                                            <i class="fas fa-print me-2"></i> Print Report
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="exportToPDF()">
+                                            <i class="fas fa-file-pdf me-2"></i> Export as PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0">Summary Statistics</h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Total Students
+                                            <span class="badge bg-primary rounded-pill" id="reportTotalStudents">0</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Fully Paid
+                                            <span class="badge bg-success rounded-pill" id="reportFullyPaid">0</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Partially Paid
+                                            <span class="badge bg-warning rounded-pill" id="reportPartiallyPaid">0</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Unpaid
+                                            <span class="badge bg-danger rounded-pill" id="reportUnpaid">0</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            Collection Rate
+                                            <span class="badge bg-info rounded-pill" id="reportCollectionRate">0%</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-8">
+                            <div class="card">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">Report Preview</h5>
+                                    <button class="btn btn-sm btn-outline-secondary no-print" onclick="printReport()">
+                                        <i class="fas fa-print me-1"></i> Print
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div id="reportContent" class="printable-area">
+                                        <!-- Report content will be generated here -->
+                                        <div class="text-center print-only mb-4">
+                                            <h3>UHAS Medical Students' Association</h3>
+                                            <h5>Dues Payment Report - 2025/2026 Academic Year</h5>
+                                            <p>Generated on: <span id="reportDate">-</span></p>
+                                            <hr>
+                                        </div>
+                                        
+                                        <div class="table-responsive">
+                                            <table class="table table-bordered" id="reportTable">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Student ID</th>
+                                                        <th>Full Name</th>
+                                                        <th>Level</th>
+                                                        <th>Amount Due</th>
+                                                        <th>Amount Paid</th>
+                                                        <th>Balance</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="reportTableBody">
+                                                    <!-- Report data will be loaded here -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        
+                                        <div class="print-only mt-4">
+                                            <div class="row">
+                                                <div class="col-6">
+                                                    <p>Generated by: _________________________</p>
+                                                </div>
+                                                <div class="col-6 text-end">
+                                                    <p>Signature: _________________________</p>
+                                                </div>
+                                            </div>
+                                            <div class="text-center mt-4">
+                                                <small>UHAS MSA Dues Management System • Generated Electronically</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Sync Section -->
+                <div id="syncSection" class="content-section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-sync me-2"></i> System Synchronization</h1>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="card mb-4">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0"><i class="fas fa-database me-2"></i> Database Configuration</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="alert alert-success">
+                                        <h5><i class="fas fa-check-circle me-2"></i> Centralized Database System</h5>
+                                        <p class="mb-0">All data is stored in a shared Google Sheet. Any changes made by any user will be visible to all users in real-time.</p>
+                                    </div>
+                                    
+                                    <div class="mb-4">
+                                        <h6>Setup Instructions:</h6>
+                                        <ol>
+                                            <li>Create a Google Sheet (or use existing one)</li>
+                                            <li>Deploy the Google Apps Script as Web App</li>
+                                            <li>Share the Google Sheet with all executive members</li>
+                                            <li>Each user enters the same Script URL</li>
+                                        </ol>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="scriptUrl" class="form-label">Google Apps Script Web App URL</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="scriptUrl" 
+                                                   placeholder="https://script.google.com/macros/s/.../exec">
+                                            <button class="btn btn-uhas" onclick="saveScriptUrl()">
+                                                <i class="fas fa-save me-2"></i> Save
+                                            </button>
+                                        </div>
+                                        <div class="form-text">All users must use the same URL to access the same database</div>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2 d-md-flex">
+                                        <button class="btn btn-uhas me-md-2" onclick="forceSync()">
+                                            <i class="fas fa-sync me-2"></i> Sync Now
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="testConnection()">
+                                            <i class="fas fa-plug me-2"></i> Test Connection
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="resetLocalData()">
+                                            <i class="fas fa-redo me-2"></i> Reset Local Cache
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0"><i class="fas fa-history me-2"></i> Sync Log</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th>Time</th>
+                                                    <th>Action</th>
+                                                    <th>Status</th>
+                                                    <th>Details</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="syncLog">
+                                                <!-- Sync logs will appear here -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-lg-4">
+                            <div class="card mb-4">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0"><i class="fas fa-network-wired me-2"></i> Connection Status</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <div id="connectionStatus" class="mb-3">
+                                        <i class="fas fa-plug fa-3x text-muted"></i>
+                                    </div>
+                                    <h5 id="statusText">Not Connected</h5>
+                                    <p class="text-muted" id="statusDetails">Database connection not configured</p>
+                                    
+                                    <div class="mt-4">
+                                        <h6>Sync Statistics</h6>
+                                        <ul class="list-group list-group-flush">
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>Last Sync:</span>
+                                                <span id="lastSyncTime">Never</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>Sync Frequency:</span>
+                                                <span>30 seconds</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between">
+                                                <span>Auto-sync:</span>
+                                                <span id="autoSyncStatus">Off</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header bg-white">
+                                    <h5 class="card-title mb-0"><i class="fas fa-users me-2"></i> Multi-User Features</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6>Real-time Collaboration:</h6>
+                                    <ul class="small">
+                                        <li>All executives see same data</li>
+                                        <li>Changes appear within 30 seconds</li>
+                                        <li>No data conflicts (Google Sheets handles concurrency)</li>
+                                        <li>Activity log shows all user actions</li>
+                                    </ul>
+                                    
+                                    <h6 class="mt-3">Recommended Setup:</h6>
+                                    <ol class="small">
+                                        <li>Treasurer: Manage all payments</li>
+                                        <li>Financial Secretary: View reports</li>
+                                        <li>President: Monitor progress</li>
+                                        <li>All can view real-time status</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Set User Modal -->
+    <div class="modal fade" id="executiveModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Set User Identity</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="executiveInput" class="form-label">Your Name & Role</label>
+                        <input type="text" class="form-control" id="executiveInput" 
+                               placeholder="e.g., John Doe (Treasurer)" required>
+                        <div class="form-text">This identifies you in the system for all actions</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userColor" class="form-label">Your Color (for identification)</label>
+                        <select class="form-select" id="userColor">
+                            <option value="#006837">UHAS Green</option>
+                            <option value="#FFD700">Gold</option>
+                            <option value="#007bff">Blue</option>
+                            <option value="#dc3545">Red</option>
+                            <option value="#28a745">Green</option>
+                            <option value="#6f42c1">Purple</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-uhas" onclick="setExecutive()">Save & Connect</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment History Modal -->
+    <div class="modal fade" id="paymentHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg-custom">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i> Student Payment History</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="paymentHistoryDetails">
+                        <!-- Payment history details will be loaded here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-uhas" onclick="printPaymentHistory()">
+                        <i class="fas fa-print me-2"></i> Print History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Payment Modal -->
+    <div class="modal fade" id="deletePaymentModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-trash-alt me-2"></i> Delete Payment Record</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-exclamation-triangle fa-4x text-danger mb-3"></i>
+                        <h5>Are you sure you want to delete this payment record?</h5>
+                        <div class="alert alert-warning">
+                            <strong>Warning:</strong> This action cannot be undone. The payment will be removed from the student's record.
+                        </div>
+                        <div id="deletePaymentDetails">
+                            <!-- Details will be populated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger-uhas" id="confirmDeletePayment">Delete Payment</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-check-circle me-2"></i> Success!</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                        <h5 id="successTitle">Operation Successful</h5>
+                        <p id="successMessage">The operation was completed successfully.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-uhas" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>    
+    <script>
+        // ============================================
+        // SYSTEM CONFIGURATION
+        // ============================================
+        
+        const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw03Y1xV4G25ieJeF9Dam5fu1AbKEbLWj5dK0HH2FdHUgmYKjYwkwI_nKgPOFVnUo2-rw/exec";
+        
+        // System variables
+        let studentRecords = [];
+        let paymentHistory = [];
+        let recentActivity = [];
+        let activeUsers = [];
+        let currentUser = null;
+        let userColor = '#006837';
+        let googleScriptUrl = DEFAULT_SCRIPT_URL;
+        let lastSyncTime = null;
+        let syncInterval = null;
+        let isOnline = false;
+        let deviceId = '';
+        
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSystem();
+            setupEventListeners();
+            checkUserSession();
+        });
+        
+        function initializeSystem() {
+            // Generate unique device ID
+            deviceId = generateDeviceId();
+            
+            // Load saved Google Script URL
+            const savedUrl = localStorage.getItem('uhas_msa_script_url');
+            if (savedUrl) {
+                googleScriptUrl = savedUrl;
+                document.getElementById('scriptUrl').value = savedUrl;
+            }
+            
+            // Check for existing user session
+            const savedUser = localStorage.getItem('uhas_msa_current_user');
+            const savedColor = localStorage.getItem('uhas_msa_user_color');
+            
+            if (savedUser) {
+                currentUser = savedUser;
+                userColor = savedColor || '#006837';
+                updateUserDisplay();
+            }
+            
+            // Set up auto-sync
+            setupAutoSync();
+            
+            // Set current date
+            document.getElementById('previewDate').textContent = new Date().toLocaleDateString();
+            document.getElementById('reportDate').textContent = new Date().toLocaleDateString();
+            
+            // Setup payment form listeners
+            setupPaymentFormListeners();
+            
+            // Setup report type listener
+            document.getElementById('reportType').addEventListener('change', function() {
+                const levelSelect = document.getElementById('levelSelectContainer');
+                levelSelect.style.display = this.value === 'level' ? 'block' : 'none';
+            });
+            
+            // Update online status
+            updateOnlineStatus();
+            
+            // Load initial data
+            loadAllData();
+        }
+        
+        function generateDeviceId() {
+            let deviceId = localStorage.getItem('uhas_msa_device_id');
+            if (!deviceId) {
+                deviceId = 'DEV-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('uhas_msa_device_id', deviceId);
+            }
+            return deviceId;
+        }
+        
+        function setupEventListeners() {
+            // Tab navigation
+            document.getElementById('dashboardTab').addEventListener('click', () => showSection('dashboardSection'));
+            document.getElementById('studentsTab').addEventListener('click', () => showSection('studentsSection'));
+            document.getElementById('paymentTab').addEventListener('click', () => showSection('paymentSection'));
+            document.getElementById('paymentHistoryTab').addEventListener('click', () => showSection('paymentHistorySection'));
+            document.getElementById('reportsTab').addEventListener('click', () => showSection('reportsSection'));
+            document.getElementById('syncTab').addEventListener('click', () => showSection('syncSection'));
+            
+            // Network status monitoring
+            window.addEventListener('online', updateOnlineStatus);
+            window.addEventListener('offline', updateOnlineStatus);
+            
+            // Before page unload
+            window.addEventListener('beforeunload', function() {
+                if (currentUser) {
+                    updateUserStatus('offline');
+                }
+            });
+            
+            // Delete payment confirmation
+            document.getElementById('confirmDeletePayment').addEventListener('click', deletePaymentRecord);
+            
+            // Payment form submission
+            document.getElementById('paymentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                recordPaymentFromForm();
+            });
+        }
+        
+        function setupPaymentFormListeners() {
+            document.getElementById('paymentAmount').addEventListener('input', updatePaymentPreview);
+            document.getElementById('paymentMethod').addEventListener('change', updatePaymentPreview);
+            document.getElementById('studentSelect').addEventListener('change', updatePaymentForm);
+        }
+        
+        function checkUserSession() {
+            if (!currentUser) {
+                setTimeout(() => {
+                    const executiveModal = new bootstrap.Modal(document.getElementById('executiveModal'));
+                    executiveModal.show();
+                }, 1000);
+            }
+        }
+        
+        // ============================================
+        // USER MANAGEMENT
+        // ============================================
+        
+        function setExecutive() {
+            const executiveInput = document.getElementById('executiveInput');
+            const executiveName = executiveInput.value.trim();
+            const selectedColor = document.getElementById('userColor').value;
+            
+            if (!executiveName) {
+                alert("Please enter your name and role.");
+                return;
+            }
+            
+            currentUser = executiveName;
+            userColor = selectedColor;
+            
+            // Save to localStorage
+            localStorage.setItem('uhas_msa_current_user', executiveName);
+            localStorage.setItem('uhas_msa_user_color', selectedColor);
+            
+            // Update display
+            updateUserDisplay();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('executiveModal'));
+            modal.hide();
+            
+            // Register user in system
+            registerUser();
+            
+            // Test connection if URL is set
+            if (googleScriptUrl && googleScriptUrl !== DEFAULT_SCRIPT_URL) {
+                testConnection();
+            }
+            
+            showSuccess("Welcome!", `Welcome, ${currentUser}! You are now connected to the UHAS MSA Dues System.`);
+        }
+        
+        function updateUserDisplay() {
+            document.getElementById('executiveName').textContent = currentUser;
+            document.getElementById('currentUser').textContent = currentUser;
+            document.getElementById('currentUser').style.backgroundColor = userColor;
+            document.getElementById('previewExecutive').textContent = currentUser;
+        }
+        
+        async function registerUser() {
+            if (!currentUser || !isOnline) return;
+            
+            try {
+                const response = await fetch(googleScriptUrl + '?action=registerUser', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user: currentUser,
+                        deviceId: deviceId,
+                        color: userColor,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    updateUserStatus('online');
+                    addSyncLog('User registered in system', 'success');
+                }
+            } catch (error) {
+                console.error('Error registering user:', error);
+            }
+        }
+        
+        async function updateUserStatus(status) {
+            if (!currentUser || !isOnline) return;
+            
+            try {
+                const response = await fetch(googleScriptUrl + '?action=updateUserStatus', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        user: currentUser,
+                        deviceId: deviceId,
+                        status: status,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    addSyncLog(`User status: ${status}`, 'info');
+                }
+            } catch (error) {
+                console.error('Error updating user status:', error);
+            }
+        }
+        
+        // ============================================
+        // DATA LOADING FUNCTIONS
+        // ============================================
+        
+        async function loadAllData() {
+            try {
+                showLoading('Loading data...');
+                
+                // Load students
+                const studentsResponse = await fetch(googleScriptUrl + '?action=getStudents&deviceId=' + deviceId);
+                const studentsData = await studentsResponse.json();
+                
+                if (studentsData.success) {
+                    studentRecords = studentsData.data;
+                    renderStudentTable();
+                    populateStudentSelect();
+                    updateDashboard();
+                }
+                
+                // Load payments
+                const paymentsResponse = await fetch(googleScriptUrl + '?action=getPayments&deviceId=' + deviceId);
+                const paymentsData = await paymentsResponse.json();
+                
+                if (paymentsData.success) {
+                    paymentHistory = paymentsData.data;
+                    renderPaymentHistoryTable();
+                    updateRecentPayments();
+                }
+                
+                // Load activity
+                const activityResponse = await fetch(googleScriptUrl + '?action=getActivity&deviceId=' + deviceId);
+                const activityData = await activityResponse.json();
+                
+                if (activityData.success) {
+                    recentActivity = activityData.data;
+                    updateActivityDisplay();
+                }
+                
+                // Load active users
+                const usersResponse = await fetch(googleScriptUrl + '?action=getActiveUsers&deviceId=' + deviceId);
+                const usersData = await usersResponse.json();
+                
+                if (usersData.success) {
+                    activeUsers = usersData.data;
+                    updateActiveUsersDisplay();
+                }
+                
+                lastSyncTime = new Date();
+                document.getElementById('lastSyncTime').textContent = lastSyncTime.toLocaleTimeString();
+                
+                addSyncLog('All data loaded successfully', 'success');
+                hideLoading();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                addSyncLog('Error loading data: ' + error.message, 'error');
+                hideLoading();
+                alert('Error loading data. Please check your connection and try again.');
+            }
+        }
+        
+        // ============================================
+        // PAYMENT MANAGEMENT
+        // ============================================
+        
+        function populateStudentSelect() {
+            const select = document.getElementById('studentSelect');
+            select.innerHTML = '<option value="">Choose a student...</option>';
+            
+            studentRecords.forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.id;
+                option.textContent = `${student.name} (${student.id}) - Level ${student.level}`;
+                select.appendChild(option);
+            });
+        }
+        
+        function updatePaymentForm() {
+            const studentSelect = document.getElementById('studentSelect');
+            const studentId = studentSelect.value;
+            const student = studentRecords.find(s => s.id === studentId);
+            
+            if (student) {
+                document.getElementById('paymentStudentId').value = student.id;
+                document.getElementById('paymentLevel').value = student.level;
+                document.getElementById('paymentAmountDue').value = `GHS ${student.amountDue.toFixed(2)}`;
+                document.getElementById('paymentAlreadyPaid').value = `GHS ${student.amountPaid.toFixed(2)}`;
+                
+                // Update preview
+                document.getElementById('previewName').textContent = student.name;
+                document.getElementById('previewId').textContent = student.id;
+                document.getElementById('previewLevel').textContent = student.level;
+                document.getElementById('previewDue').textContent = `GHS ${student.amountDue.toFixed(2)}`;
+                
+                document.getElementById('previewAmount').textContent = 'GHS 0';
+                document.getElementById('previewMethod').textContent = '-';
+                document.getElementById('previewBalance').textContent = `GHS ${student.balance.toFixed(2)}`;
+                
+                // Update status badge
+                const statusBadge = document.getElementById('previewStatus');
+                statusBadge.textContent = student.paymentStatus;
+                statusBadge.className = `status-badge status-${student.paymentStatus.toLowerCase().replace(' ', '-')}`;
+                
+                updatePaymentPreview();
+            }
+        }
+        
+        function updatePaymentPreview() {
+            const studentSelect = document.getElementById('studentSelect');
+            const studentId = studentSelect.value;
+            const student = studentRecords.find(s => s.id === studentId);
+            
+            if (!student) return;
+            
+            const paymentAmount = document.getElementById('paymentAmount');
+            const paymentMethod = document.getElementById('paymentMethod');
+            
+            const paymentAmountValue = parseFloat(paymentAmount.value) || 0;
+            const paymentMethodValue = paymentMethod.value || '';
+            
+            const newBalance = Math.max(0, student.balance - paymentAmountValue);
+            const newAmountPaid = student.amountPaid + paymentAmountValue;
+            const newStatus = calculatePaymentStatus(student.amountDue, newAmountPaid);
+            
+            // Update preview
+            document.getElementById('previewAmount').textContent = `GHS ${paymentAmountValue.toFixed(2)}`;
+            document.getElementById('previewMethod').textContent = paymentMethodValue || '-';
+            document.getElementById('previewBalance').textContent = `GHS ${newBalance.toFixed(2)}`;
+            
+            // Update status badge
+            const statusBadge = document.getElementById('previewStatus');
+            statusBadge.textContent = newStatus;
+            statusBadge.className = `status-badge status-${newStatus.toLowerCase().replace(' ', '-')}`;
+            
+            // Update balance after payment message
+            document.getElementById('balanceAfterPayment').textContent = `Balance after payment: GHS ${newBalance.toFixed(2)}`;
+            
+            // Check for overpayment
+            const overpaymentAlert = document.getElementById('overpaymentAlert');
+            if (paymentAmountValue > student.balance) {
+                overpaymentAlert.style.display = 'block';
+                document.getElementById('overpaymentMessage').textContent = `Warning: Payment exceeds balance by GHS ${(paymentAmountValue - student.balance).toFixed(2)}. Maximum allowed: GHS ${student.balance}`;
+            } else {
+                overpaymentAlert.style.display = 'none';
+            }
+        }
+        
+        function calculatePaymentStatus(amountDue, amountPaid) {
+            if (amountPaid >= amountDue) {
+                return "Paid";
+            } else if (amountPaid > 0) {
+                return "Partially Paid";
+            } else {
+                return "Unpaid";
+            }
+        }
+        
+        async function recordPaymentFromForm() {
+            if (!currentUser) {
+                alert("Please set your user identity first.");
+                const executiveModal = new bootstrap.Modal(document.getElementById('executiveModal'));
+                executiveModal.show();
+                return;
+            }
+            
+            const studentSelect = document.getElementById('studentSelect');
+            const paymentAmount = document.getElementById('paymentAmount');
+            const paymentMethod = document.getElementById('paymentMethod');
+            
+            const studentId = studentSelect.value;
+            const paymentAmountValue = parseFloat(paymentAmount.value);
+            const paymentMethodValue = paymentMethod.value;
+            
+            if (!studentId) {
+                alert("Please select a student.");
+                return;
+            }
+            
+            if (!paymentAmountValue || paymentAmountValue <= 0) {
+                alert("Please enter a valid payment amount.");
+                return;
+            }
+            
+            if (!paymentMethodValue) {
+                alert("Please select a payment method.");
+                return;
+            }
+            
+            const student = studentRecords.find(s => s.id === studentId);
+            if (!student) return;
+            
+            // Check for overpayment
+            if (paymentAmountValue > student.balance) {
+                alert(`Payment exceeds outstanding balance. Maximum allowed: GHS ${student.balance}`);
+                return;
+            }
+            
+            showLoading('Recording payment...');
+            
+            try {
+                const response = await fetch(googleScriptUrl + '?action=recordPayment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        studentId: studentId,
+                        studentName: student.name,
+                        level: student.level,
+                        amount: paymentAmountValue,
+                        method: paymentMethodValue,
+                        recordedBy: currentUser,
+                        deviceId: deviceId,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload data to get updates
+                    await loadAllData();
+                    
+                    // Reset form
+                    document.getElementById('paymentForm').reset();
+                    document.getElementById('overpaymentAlert').style.display = 'none';
+                    
+                    // Show success
+                    showSuccess(
+                        "Payment Recorded", 
+                        `${student.name} has paid GHS ${paymentAmountValue.toFixed(2)} via ${paymentMethodValue}.`
+                    );
+                } else {
+                    alert("Error recording payment: " + data.message);
+                }
+                
+                hideLoading();
+                
+            } catch (error) {
+                console.error('Error recording payment:', error);
+                hideLoading();
+                alert('Error recording payment. Please check your connection and try again.');
+            }
+        }
+        
+        // ============================================
+        // STUDENT TABLE FUNCTIONS
+        // ============================================
+        
+        function renderStudentTable(filteredStudents = null) {
+            const tbody = document.getElementById('studentsTableBody');
+            const studentsToShow = filteredStudents || studentRecords;
+            const studentCount = document.getElementById('studentCount');
+            
+            // Update count
+            studentCount.textContent = `${studentsToShow.length} students`;
+            
+            if (studentsToShow.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="text-center text-muted">No students found</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            studentsToShow.forEach(student => {
+                // Determine status badge class
+                let statusClass = 'status-unpaid';
+                if (student.paymentStatus === 'Paid') statusClass = 'status-paid';
+                if (student.paymentStatus === 'Partially Paid') statusClass = 'status-partial';
+                
+                html += `
+                    <tr>
+                        <td><span class="student-id-highlight">${student.id || '-'}</span></td>
+                        <td>${student.name}</td>
+                        <td>${student.level}</td>
+                        <td>GHS ${student.amountDue.toFixed(2)}</td>
+                        <td>GHS ${student.amountPaid.toFixed(2)}</td>
+                        <td>GHS ${student.balance.toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${student.paymentStatus}</span></td>
+                        <td>${student.paymentDate || '-'}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="quickPayment('${student.id}')">
+                                    <i class="fas fa-money-bill-wave"></i> Pay
+                                </button>
+                                <button class="btn btn-outline-info" onclick="showPaymentHistory('${student.id}')">
+                                    <i class="fas fa-history"></i> History
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        function filterStudents() {
+            const levelFilter = document.getElementById('levelFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            let filtered = studentRecords;
+            
+            if (levelFilter) {
+                filtered = filtered.filter(student => student.level === levelFilter);
+            }
+            
+            if (statusFilter) {
+                filtered = filtered.filter(student => student.paymentStatus === statusFilter);
+            }
+            
+            renderStudentTable(filtered);
+        }
+        
+        function filterByLevel(level) {
+            document.getElementById('levelFilter').value = level;
+            filterStudents();
+            showSection('studentsSection');
+        }
+        
+        function filterByStatus(status) {
+            document.getElementById('statusFilter').value = status;
+            filterStudents();
+            showSection('studentsSection');
+        }
+        
+        function searchStudents() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            
+            if (!searchTerm.trim()) {
+                renderStudentTable();
+                return;
+            }
+            
+            const filtered = studentRecords.filter(student => 
+                student.name.toLowerCase().includes(searchTerm) || 
+                (student.id && student.id.toLowerCase().includes(searchTerm))
+            );
+            
+            renderStudentTable(filtered);
+        }
+        
+        function resetFilters() {
+            document.getElementById('levelFilter').value = '';
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('searchInput').value = '';
+            renderStudentTable();
+        }
+        
+        function quickPayment(studentId) {
+            showSection('paymentSection');
+            populateStudentSelect();
+            document.getElementById('studentSelect').value = studentId;
+            updatePaymentForm();
+            document.getElementById('paymentAmount').focus();
+        }
+        
+        // ============================================
+        // PAYMENT HISTORY FUNCTIONS
+        // ============================================
+        
+        function renderPaymentHistoryTable(filteredHistory = null) {
+            const tbody = document.getElementById('paymentHistoryBody');
+            const historyToShow = filteredHistory || paymentHistory;
+            const totalPaymentsCount = document.getElementById('totalPaymentsCount');
+            
+            // Update count
+            totalPaymentsCount.textContent = `${historyToShow.length} payments`;
+            
+            if (historyToShow.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">No payment history found</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            historyToShow.forEach(payment => {
+                html += `
+                    <tr>
+                        <td>${new Date(payment.date).toLocaleDateString()}</td>
+                        <td><span class="student-id-highlight">${payment.studentId}</span></td>
+                        <td>${payment.studentName}</td>
+                        <td>${payment.level}</td>
+                        <td>GHS ${payment.amount.toFixed(2)}</td>
+                        <td>${payment.method}</td>
+                        <td>${payment.recordedBy}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="showDeletePaymentModal('${payment.id}', '${payment.studentId}')">
+                                <i class="fas fa-trash-alt"></i> Delete
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        async function showPaymentHistory(studentId) {
+            const student = studentRecords.find(s => s.id === studentId);
+            if (!student) return;
+            
+            showLoading('Loading payment history...');
+            
+            try {
+                // Get all payments for this student
+                const studentPayments = paymentHistory.filter(p => p.studentId === studentId && p.status !== 'deleted');
+                
+                const detailsDiv = document.getElementById('paymentHistoryDetails');
+                detailsDiv.innerHTML = `
+                    <h4>Payment History for ${student.name}</h4>
+                    <p><strong>Student ID:</strong> ${student.id} | <strong>Level:</strong> ${student.level}</p>
+                    <p><strong>Total Due:</strong> GHS ${student.amountDue.toFixed(2)} | <strong>Total Paid:</strong> GHS ${student.amountPaid.toFixed(2)} | <strong>Balance:</strong> GHS ${student.balance.toFixed(2)}</p>
+                    <hr>
+                    ${studentPayments.length > 0 ? 
+                        `<div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Amount (GHS)</th>
+                                        <th>Method</th>
+                                        <th>Recorded By</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${studentPayments.map(payment => `
+                                        <tr>
+                                            <td>${new Date(payment.date).toLocaleDateString()}</td>
+                                            <td>${payment.amount.toFixed(2)}</td>
+                                            <td>${payment.method}</td>
+                                            <td>${payment.recordedBy}</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-danger" onclick="showDeletePaymentModal('${payment.id}', '${student.id}')">
+                                                    <i class="fas fa-trash-alt"></i> Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>` :
+                        `<div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No payment history found for this student.
+                        </div>`
+                    }
+                `;
+                
+                hideLoading();
+                
+                const modal = new bootstrap.Modal(document.getElementById('paymentHistoryModal'));
+                modal.show();
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error loading payment history:', error);
+            }
+        }
+        
+        function showDeletePaymentModal(paymentId, studentId) {
+            const payment = paymentHistory.find(p => p.id === paymentId && p.studentId === studentId);
+            if (!payment) return;
+            
+            const student = studentRecords.find(s => s.id === studentId);
+            
+            const detailsDiv = document.getElementById('deletePaymentDetails');
+            detailsDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <p><strong>Student:</strong> ${student.name}</p>
+                    <p><strong>Student ID:</strong> ${student.id}</p>
+                    <p><strong>Payment Amount:</strong> GHS ${payment.amount.toFixed(2)}</p>
+                    <p><strong>Payment Method:</strong> ${payment.method}</p>
+                    <p><strong>Payment Date:</strong> ${new Date(payment.date).toLocaleDateString()}</p>
+                    <p><strong>Recorded By:</strong> ${payment.recordedBy}</p>
+                </div>
+                <div class="alert alert-danger">
+                    <p><strong>After deletion:</strong></p>
+                    <p>Student will have: GHS ${(student.amountPaid - payment.amount).toFixed(2)} paid</p>
+                    <p>New balance: GHS ${(student.balance + payment.amount).toFixed(2)}</p>
+                </div>
+            `;
+            
+            // Store data for deletion
+            detailsDiv.dataset.paymentId = paymentId;
+            detailsDiv.dataset.studentId = studentId;
+            
+            const modal = new bootstrap.Modal(document.getElementById('deletePaymentModal'));
+            modal.show();
+        }
+        
+        async function deletePaymentRecord() {
+            const detailsDiv = document.getElementById('deletePaymentDetails');
+            const paymentId = detailsDiv.dataset.paymentId;
+            const studentId = detailsDiv.dataset.studentId;
+            
+            showLoading('Deleting payment...');
+            
+            try {
+                const response = await fetch(googleScriptUrl + '?action=deletePayment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        paymentId: paymentId,
+                        studentId: studentId,
+                        user: currentUser,
+                        deviceId: deviceId,
+                        timestamp: new Date().toISOString()
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Reload data to get updates
+                    await loadAllData();
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('deletePaymentModal'));
+                    modal.hide();
+                    
+                    // Show success message
+                    showSuccess("Payment Deleted", `Payment deleted successfully.`);
+                } else {
+                    alert("Error deleting payment: " + data.message);
+                }
+                
+                hideLoading();
+                
+            } catch (error) {
+                hideLoading();
+                console.error('Error deleting payment:', error);
+                alert('Error deleting payment. Please check your connection and try again.');
+            }
+        }
+        
+        function filterPaymentHistory() {
+            const levelFilter = document.getElementById('historyLevelFilter').value;
+            const methodFilter = document.getElementById('historyMethodFilter').value;
+            const dateFilter = document.getElementById('historyDateFilter').value;
+            
+            let filtered = paymentHistory.filter(p => p.status !== 'deleted');
+            
+            if (levelFilter) {
+                filtered = filtered.filter(payment => payment.level === levelFilter);
+            }
+            
+            if (methodFilter) {
+                filtered = filtered.filter(payment => payment.method === methodFilter);
+            }
+            
+            if (dateFilter) {
+                const filterDate = new Date(dateFilter).toDateString();
+                filtered = filtered.filter(payment => {
+                    const paymentDate = new Date(payment.date).toDateString();
+                    return paymentDate === filterDate;
+                });
+            }
+            
+            renderPaymentHistoryTable(filtered);
+        }
+        
+        function searchPaymentHistory() {
+            const searchTerm = document.getElementById('historySearchInput').value.toLowerCase();
+            
+            if (!searchTerm.trim()) {
+                renderPaymentHistoryTable();
+                return;
+            }
+            
+            const filtered = paymentHistory.filter(payment => 
+                payment.studentName.toLowerCase().includes(searchTerm) || 
+                payment.studentId.toLowerCase().includes(searchTerm) ||
+                (payment.recordedBy && payment.recordedBy.toLowerCase().includes(searchTerm))
+            );
+            
+            renderPaymentHistoryTable(filtered);
+        }
+        
+        function resetHistoryFilters() {
+            document.getElementById('historyLevelFilter').value = '';
+            document.getElementById('historyMethodFilter').value = '';
+            document.getElementById('historyDateFilter').value = '';
+            document.getElementById('historySearchInput').value = '';
+            renderPaymentHistoryTable();
+        }
+        
+        // ============================================
+        // DASHBOARD FUNCTIONS
+        // ============================================
+        
+        function updateDashboard() {
+            const totalStudents = studentRecords.length;
+            let expectedRevenue = 0;
+            let totalCollected = 0;
+            let totalOutstanding = 0;
+            
+            studentRecords.forEach(student => {
+                expectedRevenue += student.amountDue;
+                totalCollected += student.amountPaid;
+                totalOutstanding += student.balance;
+            });
+            
+            document.getElementById('totalStudents').textContent = totalStudents;
+            document.getElementById('expectedRevenue').textContent = `GHS ${expectedRevenue.toFixed(2)}`;
+            document.getElementById('totalCollected').textContent = `GHS ${totalCollected.toFixed(2)}`;
+            document.getElementById('totalOutstanding').textContent = `GHS ${totalOutstanding.toFixed(2)}`;
+            
+            updateRecentPayments();
+            updateReportStatistics();
+        }
+        
+        function updateRecentPayments() {
+            const tbody = document.getElementById('recentPaymentsBody');
+            
+            // Get recent active payments (last 10)
+            const recentPayments = paymentHistory
+                .filter(p => p.status !== 'deleted')
+                .slice(0, 10);
+            
+            if (recentPayments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">No payments recorded yet</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            recentPayments.forEach(payment => {
+                html += `
+                    <tr>
+                        <td>${new Date(payment.timestamp).toLocaleTimeString()}</td>
+                        <td><span class="student-id-highlight">${payment.studentId}</span></td>
+                        <td>${payment.studentName}</td>
+                        <td>${payment.level}</td>
+                        <td>GHS ${payment.amount.toFixed(2)}</td>
+                        <td>${payment.method}</td>
+                        <td>${payment.recordedBy}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger" onclick="showDeletePaymentModal('${payment.id}', '${payment.studentId}')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+        }
+        
+        function updateReportStatistics() {
+            const totalStudents = studentRecords.length;
+            const fullyPaid = studentRecords.filter(s => s.paymentStatus === 'Paid').length;
+            const partiallyPaid = studentRecords.filter(s => s.paymentStatus === 'Partially Paid').length;
+            const unpaid = studentRecords.filter(s => s.paymentStatus === 'Unpaid').length;
+            
+            const totalCollected = studentRecords.reduce((sum, s) => sum + s.amountPaid, 0);
+            const expectedRevenue = studentRecords.reduce((sum, s) => sum + s.amountDue, 0);
+            const collectionRate = expectedRevenue > 0 ? (totalCollected / expectedRevenue * 100) : 0;
+            
+            document.getElementById('reportTotalStudents').textContent = totalStudents;
+            document.getElementById('reportFullyPaid').textContent = fullyPaid;
+            document.getElementById('reportPartiallyPaid').textContent = partiallyPaid;
+            document.getElementById('reportUnpaid').textContent = unpaid;
+            document.getElementById('reportCollectionRate').textContent = `${collectionRate.toFixed(1)}%`;
+        }
+        
+        function updateActivityDisplay() {
+            const activityDiv = document.getElementById('recentActivity');
+            const countElement = document.getElementById('activityCount');
+            
+            if (!recentActivity || recentActivity.length === 0) {
+                activityDiv.innerHTML = `
+                    <div class="text-center text-muted py-3">
+                        <i class="fas fa-inbox me-2"></i> No recent activity
+                    </div>
+                `;
+                countElement.textContent = '0 activities';
+                return;
+            }
+            
+            let html = '';
+            recentActivity.slice(0, 10).forEach(activity => {
+                const time = new Date(activity.timestamp).toLocaleTimeString();
+                html += `
+                    <div class="recent-activity-item">
+                        <div class="d-flex justify-content-between">
+                            <span>${activity.details || activity.action}</span>
+                            <small class="text-muted">${time}</small>
+                        </div>
+                        <small class="text-muted">By: ${activity.user}</small>
+                    </div>
+                `;
+            });
+            
+            activityDiv.innerHTML = html;
+            countElement.textContent = `${recentActivity.length} activities`;
+        }
+        
+        function updateActiveUsersDisplay() {
+            const usersDiv = document.getElementById('activeUsersList');
+            
+            if (!activeUsers || activeUsers.length === 0) {
+                usersDiv.innerHTML = '<div class="text-muted">No active users</div>';
+                return;
+            }
+            
+            let html = '';
+            activeUsers.forEach(user => {
+                const status = user.status === 'online' ? '🟢' : '⚫';
+                html += `
+                    <div class="d-flex align-items-center mb-1">
+                        <span class="me-2">${status}</span>
+                        <span>${user.name}</span>
+                        ${user.deviceId === deviceId ? '<span class="ms-2 badge bg-info">You</span>' : ''}
+                    </div>
+                `;
+            });
+            
+            usersDiv.innerHTML = html;
+        }
+        
+        // ============================================
+        // REPORT FUNCTIONS
+        // ============================================
+        
+        function generateReport() {
+            const reportType = document.getElementById('reportType').value;
+            const reportLevel = document.getElementById('reportLevel').value;
+            
+            let filteredStudents = studentRecords;
+            
+            switch (reportType) {
+                case 'unpaid':
+                    filteredStudents = studentRecords.filter(s => s.balance > 0);
+                    break;
+                case 'paid':
+                    filteredStudents = studentRecords.filter(s => s.paymentStatus === 'Paid');
+                    break;
+                case 'level':
+                    filteredStudents = studentRecords.filter(s => s.level === reportLevel);
+                    break;
+                // 'all' includes all students
+            }
+            
+            const tbody = document.getElementById('reportTableBody');
+            
+            if (filteredStudents.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">No students match the selected criteria</td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            let html = '';
+            filteredStudents.forEach(student => {
+                // Determine status badge class
+                let statusClass = 'status-unpaid';
+                if (student.paymentStatus === 'Paid') statusClass = 'status-paid';
+                if (student.paymentStatus === 'Partially Paid') statusClass = 'status-partial';
+                
+                html += `
+                    <tr>
+                        <td>${student.id || '-'}</td>
+                        <td>${student.name}</td>
+                        <td>${student.level}</td>
+                        <td>GHS ${student.amountDue.toFixed(2)}</td>
+                        <td>GHS ${student.amountPaid.toFixed(2)}</td>
+                        <td>GHS ${student.balance.toFixed(2)}</td>
+                        <td><span class="status-badge ${statusClass}">${student.paymentStatus}</span></td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+            
+            // Update report date
+            document.getElementById('reportDate').textContent = new Date().toLocaleDateString();
+        }
+        
+        function printReport() {
+            window.print();
+        }
+        
+        function printPaymentHistory() {
+            const originalContent = document.body.innerHTML;
+            const detailsDiv = document.getElementById('paymentHistoryDetails');
+            const printContent = detailsDiv.innerHTML;
+            
+            document.body.innerHTML = `
+                <div style="padding: 20px;">
+                    <h2>UHAS MSA - Payment History</h2>
+                    <p>Generated on: ${new Date().toLocaleDateString()}</p>
+                    <hr>
+                    ${printContent}
+                </div>
+            `;
+            
+            window.print();
+            document.body.innerHTML = originalContent;
+            location.reload();
+        }
+        
+        function exportToPDF() {
+            alert("PDF export would be implemented with a PDF library. For now, use Print function.");
+        }
+        
+        function exportToCSV() {
+            let csv = "Student ID,Full Name,Level,Programme,Amount Due,Amount Paid,Balance,Payment Status,Payment Date,Payment Method,Recorded By\n";
+            
+            studentRecords.forEach(student => {
+                csv += `"${student.id || ''}","${student.name}","${student.level}","${student.programme}",`;
+                csv += `${student.amountDue},${student.amountPaid},${student.balance},"${student.paymentStatus}",`;
+                csv += `"${student.paymentDate || ''}","${student.paymentMethod || ''}","${student.recordedBy || ''}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `uhas_msa_dues_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            
+            addSyncLog("Data exported to CSV", "success");
+        }
+        
+        // ============================================
+        // SYNC FUNCTIONS
+        // ============================================
+        
+        function showSyncIndicator(message, type = 'info', duration = 3000) {
+            const syncIndicator = document.getElementById('syncIndicator');
+            const syncMessage = document.getElementById('syncMessage');
+            
+            syncIndicator.style.display = 'block';
+            syncMessage.textContent = message;
+            
+            // Set alert type
+            syncIndicator.className = 'sync-indicator alert alert-info shadow-sm';
+            if (type === 'success') {
+                syncIndicator.className = 'sync-indicator alert alert-success shadow-sm';
+            } else if (type === 'error') {
+                syncIndicator.className = 'sync-indicator alert alert-danger shadow-sm';
+            } else if (type === 'warning') {
+                syncIndicator.className = 'sync-indicator alert alert-warning shadow-sm';
+            }
+            
+            // Hide after duration
+            setTimeout(() => {
+                syncIndicator.style.display = 'none';
+            }, duration);
+        }
+        
+        async function forceSync() {
+            showLoading('Syncing data...');
+            await loadAllData();
+            showSyncIndicator('Data synced successfully', 'success');
+        }
+        
+        async function testConnection() {
+            if (!googleScriptUrl || googleScriptUrl === DEFAULT_SCRIPT_URL) {
+                alert('Please set Google Script URL first');
+                return false;
+            }
+            
+            showLoading('Testing connection...');
+            
+            try {
+                const response = await fetch(googleScriptUrl + '?action=ping');
+                const data = await response.json();
+                
+                hideLoading();
+                
+                if (data.success) {
+                    // Update display
+                    document.getElementById('statusText').textContent = 'Connected';
+                    document.getElementById('statusDetails').textContent = `Sheet: ${data.sheetName}`;
+                    document.getElementById('connectionStatus').innerHTML = '<i class="fas fa-plug fa-3x text-success"></i>';
+                    
+                    showSyncIndicator('✅ Connection successful!', 'success');
+                    return true;
+                } else {
+                    showSyncIndicator('❌ Server error: ' + data.message, 'error');
+                    return false;
+                }
+                
+            } catch (error) {
+                hideLoading();
+                showSyncIndicator('❌ Connection failed: ' + error.message, 'error');
+                return false;
+            }
+        }
+        
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrl').value.trim();
+            if (!url) {
+                alert("Please enter a Google Apps Script URL");
+                return;
+            }
+            
+            googleScriptUrl = url;
+            localStorage.setItem('uhas_msa_script_url', url);
+            addSyncLog('Google Script URL saved', 'success');
+            updateConnectionStatus();
+            showSyncIndicator("Google Script URL saved successfully!", 'success');
+        }
+        
+        function setupAutoSync() {
+            // Auto-sync every 30 seconds
+            syncInterval = setInterval(async () => {
+                if (isOnline && currentUser && googleScriptUrl !== DEFAULT_SCRIPT_URL) {
+                    await loadAllData();
+                }
+            }, 30000);
+            
+            document.getElementById('autoSyncStatus').textContent = 'On';
+        }
+        
+        // ============================================
+        // NETWORK STATUS
+        // ============================================
+        
+        function updateOnlineStatus() {
+            const online = navigator.onLine;
+            const statusElement = document.getElementById('onlineStatus');
+            
+            if (online) {
+                isOnline = true;
+                statusElement.className = 'online-badge me-2';
+                statusElement.innerHTML = '<i class="fas fa-wifi me-1"></i> Online';
+                updateConnectionStatus();
+                
+                // Register user if not already
+                if (currentUser) {
+                    registerUser();
+                }
+            } else {
+                isOnline = false;
+                statusElement.className = 'offline-badge me-2';
+                statusElement.innerHTML = '<i class="fas fa-wifi-slash me-1"></i> Offline';
+                updateConnectionStatus();
+            }
+        }
+        
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('statusText');
+            const statusDetails = document.getElementById('statusDetails');
+            
+            if (!googleScriptUrl || googleScriptUrl === DEFAULT_SCRIPT_URL) {
+                statusEl.innerHTML = '<i class="fas fa-plug fa-3x text-muted"></i>';
+                statusText.textContent = "Not Configured";
+                statusDetails.textContent = "Please set your Google Apps Script URL";
+                return;
+            }
+            
+            if (isOnline) {
+                if (lastSyncTime) {
+                    statusEl.innerHTML = '<i class="fas fa-plug fa-3x text-success"></i>';
+                    statusText.textContent = "Connected";
+                    statusDetails.textContent = `Last sync: ${lastSyncTime.toLocaleTimeString()}`;
+                } else {
+                    statusEl.innerHTML = '<i class="fas fa-plug fa-3x text-warning"></i>';
+                    statusText.textContent = "Ready to Sync";
+                    statusDetails.textContent = "Click 'Sync Now' to load data";
+                }
+            } else {
+                statusEl.innerHTML = '<i class="fas fa-plug fa-3x text-danger"></i>';
+                statusText.textContent = "Offline";
+                statusDetails.textContent = "Check your internet connection";
+            }
+        }
+        
+        // ============================================
+        // UI UTILITY FUNCTIONS
+        // ============================================
+        
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            document.getElementById(sectionId).style.display = 'block';
+            
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const tabMap = {
+                'dashboardSection': 'dashboardTab',
+                'studentsSection': 'studentsTab',
+                'paymentSection': 'paymentTab',
+                'paymentHistorySection': 'paymentHistoryTab',
+                'reportsSection': 'reportsTab',
+                'syncSection': 'syncTab'
+            };
+            
+            if (tabMap[sectionId]) {
+                document.getElementById(tabMap[sectionId]).classList.add('active');
+            }
+            
+            // Special handling for each section
+            if (sectionId === 'studentsSection') {
+                renderStudentTable();
+            } else if (sectionId === 'paymentHistorySection') {
+                renderPaymentHistoryTable();
+            } else if (sectionId === 'reportsSection') {
+                updateReportStatistics();
+            } else if (sectionId === 'syncSection') {
+                updateConnectionStatus();
+            }
+        }
+        
+        function addSyncLog(message, type = "info") {
+            const logTable = document.getElementById('syncLog');
+            const row = document.createElement('tr');
+            
+            let icon = 'info-circle';
+            let color = 'text-info';
+            
+            if (type === 'success') {
+                icon = 'check-circle';
+                color = 'text-success';
+            } else if (type === 'error') {
+                icon = 'exclamation-circle';
+                color = 'text-danger';
+            } else if (type === 'warning') {
+                icon = 'exclamation-triangle';
+                color = 'text-warning';
+            }
+            
+            row.innerHTML = `
+                <td>${new Date().toLocaleTimeString()}</td>
+                <td>${message}</td>
+                <td><i class="fas fa-${icon} ${color}"></i> ${type.toUpperCase()}</td>
+                <td>${currentUser || 'Unknown user'}</td>
+            `;
+            
+            logTable.prepend(row);
+            
+            // Keep only last 20 logs
+            while (logTable.rows.length > 20) {
+                logTable.deleteRow(-1);
+            }
+        }
+        
+        function showSuccess(title, message) {
+            document.getElementById('successTitle').textContent = title;
+            document.getElementById('successMessage').textContent = message;
+            
+            const successModal = new bootstrap.Modal(document.getElementById('successModal'));
+            successModal.show();
+        }
+        
+        function showLoading(message) {
+            document.getElementById('syncIndicator').style.display = 'block';
+            document.getElementById('syncMessage').textContent = message;
+            document.getElementById('loadingOverlay').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            setTimeout(() => {
+                document.getElementById('syncIndicator').style.display = 'none';
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }, 500);
+        }
+        
+        function showPaymentModal() {
+            showSection('paymentSection');
+            populateStudentSelect();
+            document.getElementById('studentSelect').focus();
+        }
+        
+        function resetLocalData() {
+            if (confirm('This will clear all locally cached data. Continue?')) {
+                localStorage.removeItem('uhas_msa_current_user');
+                localStorage.removeItem('uhas_msa_user_color');
+                localStorage.removeItem('uhas_msa_script_url');
+                localStorage.removeItem('uhas_msa_device_id');
+                
+                location.reload();
+            }
+        }
+    </script>
+</body>
+</html>
